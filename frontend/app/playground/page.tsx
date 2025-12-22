@@ -1,13 +1,27 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import ChatInterface from '@/components/ChatInterface'
 import MCPConfigSidebar from '@/components/MCPConfigSidebar'
+import Loader from '@/components/Loader'
 
 export default function PlaygroundPage() {
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [isConfigActive, setIsConfigActive] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    // Simulate page loading time
+    const timer = setTimeout(() => {
+      setIsLoading(false)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [])
+
+  if (isLoading) {
+    return <Loader fullScreen text="Loading playground..." />
+  }
 
   return (
     <main className="page">

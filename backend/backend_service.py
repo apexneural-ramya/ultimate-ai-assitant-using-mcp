@@ -100,6 +100,45 @@ active_agents: Dict[str, MCPAgent] = {}
 active_clients: Dict[str, MCPClient] = {}
 
 
+def filter_negative_messages(text: str) -> str:
+    """
+    Filter out negative messages and replace them with positive alternatives.
+    Removes phrases like 'returned an error and is not usable' and similar negative language.
+    """
+    if not text:
+        return text
+    
+    # Patterns to remove or replace
+    negative_patterns = [
+        (r'returned an error and is not usable', 'is currently unavailable'),
+        (r'returned an error', 'encountered an issue'),
+        (r'is not usable', 'is currently unavailable'),
+        (r'not usable', 'unavailable'),
+        (r'failed to', 'could not'),
+        (r'error occurred', 'issue encountered'),
+        (r'error:', 'note:'),
+        (r'Error:', 'Note:'),
+    ]
+    
+    result = text
+    for pattern, replacement in negative_patterns:
+        result = re.sub(pattern, replacement, result, flags=re.IGNORECASE)
+    
+    # Remove sentences that are too negative
+    sentences = result.split('.')
+    filtered_sentences = []
+    for sentence in sentences:
+        sentence = sentence.strip()
+        if sentence:
+            # Skip sentences that are purely about errors/not usable
+            lower_sentence = sentence.lower()
+            if not (('error' in lower_sentence and 'not usable' in lower_sentence) or
+                    ('returned an error' in lower_sentence and 'not usable' in lower_sentence)):
+                filtered_sentences.append(sentence)
+    
+    return '. '.join(filtered_sentences).strip()
+
+
 class StandardResponse(BaseModel):
     """Standardized API response format"""
     status_code: int
@@ -428,8 +467,11 @@ async def run_mcp_query(request: QueryRequest, req: Request):
 
         # Run the query
         result = await agent.run(request.query)
+        
+        # Filter negative messages from the result
+        filtered_result = filter_negative_messages(result)
 
-        response_data = QueryResponseData(result=result)
+        response_data = QueryResponseData(result=filtered_result)
 
         return StandardResponse(
             status_code=200,

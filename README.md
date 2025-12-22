@@ -14,11 +14,64 @@ A Next.js frontend application that provides a chat interface for interacting wi
 
 Before starting, ensure you have the following installed:
 
-- **Python 3.12+** - [Download Python](https://www.python.org/downloads/)
+- **Python 3.12 or 3.13** - [Download Python](https://www.python.org/downloads/)
+  - ⚠️ **Important**: Python 3.14 is NOT supported yet due to compatibility issues with `pydantic-core`
+  - Check your Python version: `python --version` or `python3 --version`
+  - If you have Python 3.14, install Python 3.12 or 3.13 separately
 - **Node.js 18+** and **npm** - [Download Node.js](https://nodejs.org/)
 - **uv** package manager (recommended) - [Install uv](https://github.com/astral-sh/uv)
   - OR use `pip` and `venv` as alternatives
 - **Git** (optional, for cloning the repository)
+
+## Python Version Requirements
+
+This project requires **Python 3.12 or 3.13**. Python 3.14 is not currently supported.
+
+### Why Python 3.14 is not supported?
+
+Python 3.14 introduced breaking changes to the C API that some dependencies (notably `pydantic-core`) haven't adapted to yet. The project uses `mcp-use` which depends on `pydantic`, and `pydantic-core` 2.33.2 doesn't compile with Python 3.14.
+
+### Checking Your Python Version
+
+```bash
+# Check Python version
+python --version
+# Or on some systems:
+python3 --version
+```
+
+### Using a Specific Python Version
+
+If you have multiple Python versions installed, you can specify which one to use:
+
+**With uv:**
+```bash
+cd backend
+uv sync --python 3.12
+# Or
+uv sync --python 3.13
+```
+
+**With pip/venv:**
+```bash
+# Windows
+py -3.12 -m venv .venv
+# Or
+py -3.13 -m venv .venv
+
+# Linux/Mac
+python3.12 -m venv .venv
+# Or
+python3.13 -m venv .venv
+```
+
+### Installing Python 3.12 or 3.13
+
+If you only have Python 3.14 installed:
+
+1. Download Python 3.12 or 3.13 from [python.org/downloads](https://www.python.org/downloads/)
+2. Install it alongside your existing Python version
+3. Use the version-specific commands above to create your virtual environment
 
 ## Quick Start Guide
 
@@ -304,7 +357,7 @@ You should see output like:
 
 Use this checklist to ensure everything is set up correctly:
 
-- [ ] Python 3.12+ installed
+- [ ] Python 3.12 or 3.13 installed (check with `python --version`)
 - [ ] Node.js 18+ installed
 - [ ] `uv` installed (or using pip/venv)
 - [ ] Python dependencies installed (`cd backend && uv sync` or `cd backend && pip install -r requirements.txt`)
@@ -499,6 +552,34 @@ All API endpoints return responses in a standardized format:
 - Ensure all dependencies are installed: `cd backend && uv sync` or `cd backend && pip install -r requirements.txt`
 - Check that port 8000 is not already in use
 - Verify your `backend/.env` file exists and has the required API keys
+
+**Problem: `pydantic-core` compilation errors with Python 3.14**
+
+**Symptoms:**
+- Error: `cannot find function PyUnicode_New in module pyo3::ffi`
+- Error: `Failed to build pydantic-core`
+- Error message mentions "CPython 3.14"
+
+**Solution:**
+- This error occurs because you're using Python 3.14, which is not supported
+- Install Python 3.12 or 3.13 from [python.org/downloads](https://www.python.org/downloads/)
+- Create a new virtual environment with the correct Python version:
+  ```bash
+  cd backend
+  # Remove old virtual environment
+  rm -rf .venv  # Linux/Mac
+  # Or: Remove-Item -Recurse -Force .venv  # Windows PowerShell
+  
+  # Create new venv with Python 3.12
+  python3.12 -m venv .venv  # Linux/Mac
+  # Or: py -3.12 -m venv .venv  # Windows
+  
+  # Activate and install
+  source .venv/bin/activate  # Linux/Mac
+  # Or: .venv\Scripts\activate  # Windows
+  pip install -r requirements.txt
+  ```
+- Or use `uv` with specific Python version: `uv sync --python 3.12`
 
 **Problem: `orjson` compilation errors (Python 3.12)**
 

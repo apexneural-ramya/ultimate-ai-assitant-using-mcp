@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Loader from '@/components/Loader'
 
 interface MCPConfigSidebarProps {
   onConfigActivated: (sessionId: string) => void
@@ -208,8 +209,13 @@ export default function MCPConfigSidebar({
               color: 'white',
               cursor: loading ? 'not-allowed' : 'pointer',
               fontWeight: 500,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem',
             }}
           >
+            {loading && <Loader size="small" />}
             {loading ? 'Activating...' : 'Activate Configuration'}
           </button>
 

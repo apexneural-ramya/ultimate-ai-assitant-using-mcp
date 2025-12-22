@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import Loader from '@/components/Loader'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -144,9 +145,13 @@ export default function ChatInterface({ sessionId, isConfigActive }: ChatInterfa
                 borderRadius: '12px',
                 backgroundColor: '#fff',
                 boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
               }}
             >
-              Processing your request...
+              <Loader size="small" />
+              <span>Processing your request...</span>
             </div>
           </div>
         )}

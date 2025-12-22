@@ -1,8 +1,19 @@
 'use client'
 
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Loader from '@/components/Loader'
 
 export default function Home() {
+  const router = useRouter()
+  const [isNavigating, setIsNavigating] = useState(false)
+
+  const handlePlaygroundClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault()
+    setIsNavigating(true)
+    router.push('/playground')
+  }
   const featureCards = [
     {
       title: 'MCP-native',
@@ -31,6 +42,7 @@ export default function Home() {
 
   return (
     <main className="page">
+      {isNavigating && <Loader fullScreen text="Loading playground..." />}
       <section className="hero">
         <div className="container hero__content">
           <div className="pill">MCP • FastAPI • Next.js</div>
@@ -40,8 +52,13 @@ export default function Home() {
             Next.js interface powered by a FastAPI backend.
           </p>
           <div className="hero__actions">
-            <Link className="btn btn--primary" href="/playground">
-              Launch Live Playground
+            <Link 
+              className="btn btn--primary" 
+              href="/playground"
+              onClick={handlePlaygroundClick}
+              style={{ pointerEvents: isNavigating ? 'none' : 'auto', opacity: isNavigating ? 0.7 : 1 }}
+            >
+              {isNavigating ? 'Loading...' : 'Launch Live Playground'}
             </Link>
             <a className="btn btn--ghost" href="#how-it-works">
               See how it works
@@ -126,8 +143,13 @@ export default function Home() {
             </p>
           </div>
           <div className="cta__actions">
-            <Link className="btn btn--primary" href="/playground">
-              Try the playground
+            <Link 
+              className="btn btn--primary" 
+              href="/playground"
+              onClick={handlePlaygroundClick}
+              style={{ pointerEvents: isNavigating ? 'none' : 'auto', opacity: isNavigating ? 0.7 : 1 }}
+            >
+              {isNavigating ? 'Loading...' : 'Try the playground'}
             </Link>
             <a className="btn btn--ghost" href="#how-it-works">
               View setup steps
