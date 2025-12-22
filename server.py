@@ -16,27 +16,27 @@ async def main():
 
     # Create configuration dictionary (only Firecrawl and Ragie MCP servers)
     config = {
-        "mcpServers": {
-            "mcp-server-firecrawl": {
-                "command": "npx",
-                "args": ["-y", "firecrawl-mcp"],
-                "env": {
+      "mcpServers": {
+        "mcp-server-firecrawl": {
+            "command": "npx",
+            "args": ["-y", "firecrawl-mcp"],
+            "env": {
                     "FIRECRAWL_API_KEY": os.getenv("FIRECRAWL_API_KEY"),
                 },
-            },
-            "ragie": {
-                "command": "npx",
-                "args": [
-                    "-y",
-                    "@ragieai/mcp-server",
-                    "--partition",
+          },
+          "ragie": {
+            "command": "npx",
+            "args": [
+              "-y",
+              "@ragieai/mcp-server",
+              "--partition",
                     "default",
-                ],
-                "env": {
+            ],
+            "env": {
                     "RAGIE_API_KEY": os.getenv("RAGIE_API_KEY"),
                 },
             },
-        }
+      }
     }
 
     # Create MCPClient from configuration dictionary
