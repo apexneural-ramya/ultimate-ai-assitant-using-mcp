@@ -20,7 +20,9 @@ Before starting, ensure you have the following installed:
   - OR use `pip` and `venv` as alternatives
 - **Git** (optional, for cloning the repository)
 
-## Installation & Setup
+## Quick Start Guide
+
+Follow these steps to get the project up and running:
 
 ### Step 1: Clone the Repository (if applicable)
 
@@ -34,12 +36,24 @@ cd ultimate-ai-assitant-using-mcp
 **Option A: Using uv (Recommended)**
 
 ```bash
+# Install uv if you haven't already
+# Windows (PowerShell):
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+# Linux/Mac:
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Navigate to backend directory and install all Python dependencies
+cd backend
 uv sync
+cd ..
 ```
 
-**Option B: Using pip**
+**Option B: Using pip and venv**
 
 ```bash
+# Navigate to backend directory
+cd backend
+
 # Create virtual environment
 python -m venv .venv
 
@@ -51,14 +65,19 @@ source .venv/bin/activate
 
 # Install dependencies
 pip install -r requirements.txt
+
+# Note: Keep the virtual environment activated while working in backend directory
+# To deactivate later, just type: deactivate
 ```
 
 **Required Python packages:**
-- fastapi
-- uvicorn
-- python-dotenv
-- langchain-openai
-- mcp-use
+- fastapi - Web framework
+- uvicorn - ASGI server
+- python-dotenv - Environment variable management
+- langchain-openai - OpenAI/OpenRouter LLM integration
+- langchain-ollama - Ollama LLM integration (optional, for local LLMs)
+- mcp-use - MCP protocol implementation
+- orjson - Fast JSON library (required for Python 3.12 compatibility)
 
 ### Step 3: Install Frontend Dependencies
 
@@ -68,91 +87,252 @@ npm install
 cd ..
 ```
 
+**Note**: Make sure you have Node.js 18+ installed. Check with `node --version`.
+
 ### Step 4: Set Up Environment Variables
 
-**Backend Environment Variables**
+#### 4.1: Backend Environment Variables
 
-Create a `.env` file in the project root directory:
+**Create `.env` file in the `backend` directory:**
+
+```bash
+# Navigate to backend directory
+cd backend
+
+# Copy the example file
+cp .env.example .env
+
+# OR create manually
+# Windows (PowerShell):
+Copy-Item .env.example .env
+# Linux/Mac:
+cp .env.example .env
+
+# Return to root
+cd ..
+```
+
+**Edit `.env` file and fill in your API keys:**
 
 ```env
-# LLM Configuration (OpenRouter or OpenAI)
+# ============================================
+# REQUIRED: Backend Server Configuration
+# ============================================
+BACKEND_HOST=0.0.0.0
+BACKEND_PORT=8000
+FRONTEND_URL=http://localhost:3000
+
+# ============================================
+# REQUIRED: LLM Configuration
+# ============================================
+# Option 1: Use OpenRouter (recommended)
 OPENROUTER_API_KEY=your-openrouter-api-key-here
-# Optional: Use OpenAI directly instead
+
+# Option 2: Use OpenAI directly (uncomment if using)
 # OPENAI_API_KEY=your-openai-api-key-here
 
-# Optional: Override OpenRouter base URL if self-hosting
+# ============================================
+# OPTIONAL: LLM Model Configuration
+# ============================================
+LLM_MODEL=openai/gpt-4o-mini
 OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+MCP_MAX_STEPS=100
 
-# MCP Server API Keys
+# ============================================
+# REQUIRED: MCP Server API Keys
+# ============================================
 FIRECRAWL_API_KEY=your-firecrawl-api-key-here
 RAGIE_API_KEY=your-ragie-api-key-here
 ```
 
-**Frontend Environment Variables**
+#### 4.2: Frontend Environment Variables
 
-Create a `.env.local` file in the `frontend` directory:
+**Create `.env.local` file in the `frontend` directory:**
+
+```bash
+cd frontend
+
+# Copy the example file
+cp .env.example .env.local
+
+# OR create manually
+# Windows (PowerShell):
+Copy-Item .env.example .env.local
+# Linux/Mac:
+cp .env.example .env.local
+
+cd ..
+```
+
+**Edit `frontend/.env.local` file:**
 
 ```env
 BACKEND_URL=http://localhost:8000
 ```
 
-**Getting API Keys:**
+**Note**: If you change the backend port in `backend/.env`, make sure to update `BACKEND_URL` in `frontend/.env.local` accordingly.
 
-1. **OpenRouter API Key**: Sign up at [OpenRouter](https://openrouter.ai/) and get your API key
-2. **Firecrawl API Key**: Sign up at [Firecrawl](https://firecrawl.dev/) and get your API key
-3. **Ragie API Key**: Sign up at [Ragie](https://ragie.ai/) and get your API key
+#### 4.3: Get Your API Keys
 
-### Step 5: Run the Application
+You need to obtain API keys from the following services:
 
-You need to run both the backend and frontend servers simultaneously.
+1. **OpenRouter API Key** (for LLM):
+   - Sign up at [OpenRouter](https://openrouter.ai/)
+   - Go to [API Keys](https://openrouter.ai/keys)
+   - Create a new API key
+   - Copy and paste it into `backend/.env` as `OPENROUTER_API_KEY`
 
-**Terminal 1 - Start Python Backend:**
+2. **Firecrawl API Key** (for web scraping):
+   - Sign up at [Firecrawl](https://firecrawl.dev/)
+   - Go to your dashboard
+   - Create a new API key
+   - Copy and paste it into `backend/.env` as `FIRECRAWL_API_KEY`
+
+3. **Ragie API Key** (for multimodal RAG):
+   - Sign up at [Ragie](https://ragie.ai/)
+   - Go to your dashboard
+   - Create a new API key
+   - Copy and paste it into `backend/.env` as `RAGIE_API_KEY`
+
+### Step 5: Start the Backend Server
+
+**Open Terminal 1 (or Command Prompt/PowerShell):**
 
 ⚠️ **IMPORTANT**: Always use `uv run` to ensure the correct virtual environment is used!
 
+**Using uv (Recommended):**
+
 ```bash
-# Using uv (REQUIRED - ensures correct virtual environment)
-uv run uvicorn backend_service:app --reload --port 8000
+# Make sure you're in the project root directory
+cd ultimate-ai-assitant-using-mcp
+
+# Start the backend server
+# The host and port are read from BACKEND_HOST and BACKEND_PORT in backend/.env
+uv run uvicorn backend.backend_service:app --reload --host ${BACKEND_HOST:-0.0.0.0} --port ${BACKEND_PORT:-8000}
 ```
 
 **OR if you've activated the virtual environment manually:**
 
 ```bash
+# Navigate to backend directory
+cd backend
+
 # First activate the virtual environment
 # Windows:
 .venv\Scripts\activate
 # Linux/Mac:
 source .venv/bin/activate
 
-# Then run uvicorn
-uvicorn backend_service:app --reload --port 8000
+# Then run uvicorn (from backend directory, use relative import)
+# Make sure BACKEND_HOST and BACKEND_PORT are set in backend/.env
+uvicorn backend_service:app --reload --host 0.0.0.0 --port 8000
 ```
+
+**Verify Backend is Running:**
+
+You should see output like:
+```
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process
+INFO:     Started server process
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+```
+
+**Test the Backend:**
+
+- Open your browser and visit: http://localhost:8000/health
+- You should see: `{"status":"healthy"}`
+- API Documentation: http://localhost:8000/docs
 
 **Note**: If you see `ModuleNotFoundError: No module named 'mcp_use'`, you're not using the correct virtual environment. Use `uv run` instead!
 
-The backend will be available at:
-- **API**: http://localhost:8000
-- **API Documentation (Swagger)**: http://localhost:8000/docs
-- **Health Check**: http://localhost:8000/health
+### Step 6: Start the Frontend Server
 
-**Terminal 2 - Start Next.js Frontend:**
+**Open Terminal 2 (a new terminal window):**
 
 ```bash
+# Navigate to the frontend directory
 cd frontend
+
+# Start the Next.js development server
 npm run dev
 ```
 
-The frontend will be available at:
-- **Application**: http://localhost:3000
+**Verify Frontend is Running:**
+
+You should see output like:
+```
+  ▲ Next.js 14.x.x
+  - Local:        http://localhost:3000
+  - ready started server on 0.0.0.0:3000
+```
+
+**Access the Application:**
+
+- Open your browser and visit: http://localhost:3000
+- You should see the MCP AI Assistant interface
+
+### Step 7: Verify Everything is Working
+
+1. **Check Backend Health:**
+   - Visit: http://localhost:8000/health
+   - Should return: `{"status":"healthy"}`
+
+2. **Check Frontend:**
+   - Visit: http://localhost:3000
+   - Should show the chat interface
+
+3. **Check API Documentation:**
+   - Visit: http://localhost:8000/docs
+   - Should show Swagger UI with all available endpoints
+
+### Step 8: Configure and Use the Application
+
+1. **Configure MCP Servers:**
+   - In the sidebar, click "Load Example Config" to see a sample configuration
+   - The example uses environment variable placeholders like `${FIRECRAWL_API_KEY}`
+   - Click "Activate Configuration" to initialize the MCP client
+   - You should see: "✅ Configuration activated successfully!"
+
+2. **Start Chatting:**
+   - Type a question in the chat input
+   - Example: "What tools do you have from MCP?"
+   - The AI will use Firecrawl and Ragie MCP tools to respond
+
+## Complete Startup Checklist
+
+Use this checklist to ensure everything is set up correctly:
+
+- [ ] Python 3.12+ installed
+- [ ] Node.js 18+ installed
+- [ ] `uv` installed (or using pip/venv)
+- [ ] Python dependencies installed (`cd backend && uv sync` or `cd backend && pip install -r requirements.txt`)
+- [ ] Frontend dependencies installed (`cd frontend && npm install`)
+- [ ] `.env` file created in `backend/` directory with all required variables
+- [ ] `frontend/.env.local` file created with `BACKEND_URL`
+- [ ] OpenRouter API key obtained and added to `backend/.env`
+- [ ] Firecrawl API key obtained and added to `backend/.env`
+- [ ] Ragie API key obtained and added to `backend/.env`
+- [ ] Backend server running (Terminal 1)
+- [ ] Frontend server running (Terminal 2)
+- [ ] Backend health check passes (http://localhost:8000/health)
+- [ ] Frontend accessible (http://localhost:3000)
+- [ ] MCP configuration activated successfully
 
 ## Usage
 
-### 1. Configure MCP Servers
+Once both servers are running (see Step 7 above), follow these steps to use the application:
 
-1. Open http://localhost:3000 in your browser
-2. In the sidebar, you'll see the "MCP Configuration" section
-3. Click "Load Example Config" to see a sample configuration, OR
-4. Paste your MCP configuration JSON directly into the text area:
+### 1. Open the Application
+
+Navigate to http://localhost:3000 in your web browser.
+
+### 2. Configure MCP Servers
+
+1. In the sidebar on the left, you'll see the "MCP Configuration" section
+2. Click "Load Example Config" button to load a pre-configured example, OR
+3. Paste your MCP configuration JSON directly into the text area:
 
 ```json
 {
@@ -180,22 +360,34 @@ The frontend will be available at:
 }
 ```
 
-5. Click "Activate Configuration" to initialize the MCP client
-6. You should see a success message: "✅ Configuration activated successfully!"
+**Note**: The `${FIRECRAWL_API_KEY}` and `${RAGIE_API_KEY}` placeholders will be automatically replaced with values from your `backend/.env` file.
 
-### 2. Chat with MCP Tools
+4. Click "Activate Configuration" button to initialize the MCP client
+5. Wait for the success message: "✅ Configuration activated successfully!"
+6. You should see "✅ MCP Client Active" and "✅ Agent Ready" status indicators in the sidebar
 
-1. Once the configuration is activated, you'll see "✅ MCP Client Active" and "✅ Agent Ready" in the sidebar
-2. Type your question or request in the chat input at the bottom
-3. The AI agent will use the appropriate MCP tools (Firecrawl for web scraping, Ragie for RAG) to respond
-4. Example queries:
-   - "What tools do you have from MCP?"
-   - "Scrape the content from https://example.com"
-   - "Search my documents for information about AI"
+### 3. Chat with MCP Tools
 
-### 3. Clear Configuration
+1. Once the configuration is activated, the chat interface will be ready
+2. Type your question or request in the chat input at the bottom of the screen
+3. Press Enter or click the send button
+4. The AI agent will use the appropriate MCP tools to respond:
+   - **Firecrawl**: For web scraping and content extraction
+   - **Ragie**: For multimodal RAG (Retrieval-Augmented Generation)
 
-Click "Clear Chat & Config" in the sidebar to reset the configuration and chat history.
+**Example Queries:**
+- "What tools do you have from MCP?"
+- "Scrape the content from https://example.com"
+- "Search my documents for information about AI"
+- "What can you do with Firecrawl?"
+- "Help me find information about machine learning"
+
+### 4. Clear Configuration
+
+To reset the configuration and start fresh:
+- Click "Clear Chat & Config" button in the sidebar
+- This will clear the chat history and reset the MCP configuration
+- You'll need to activate the configuration again before chatting
 
 ## Project Structure
 
@@ -216,12 +408,16 @@ Click "Clear Chat & Config" in the sidebar to reset the configuration and chat h
 │   ├── .env.local                 # Frontend environment variables
 │   ├── package.json               # Frontend dependencies
 │   └── tsconfig.json              # TypeScript configuration
-├── backend_service.py             # FastAPI backend service
-├── server.py                      # Standalone Python script (alternative)
-├── .env                           # Backend environment variables
-├── .env.example                   # Example environment variables
-├── pyproject.toml                 # Python project configuration
-├── requirements.txt                # Python dependencies (alternative)
+├── backend/                       # Backend Python service
+│   ├── __init__.py                # Backend package init
+│   ├── backend_service.py         # FastAPI backend service
+│   ├── server.py                  # Standalone Python script (alternative)
+│   ├── .env                       # Backend environment variables
+│   ├── .env.example               # Example environment variables
+│   ├── pyproject.toml             # Python project configuration
+│   ├── requirements.txt           # Python dependencies (alternative)
+│   ├── uv.lock                    # uv lock file
+│   └── .venv/                     # Python virtual environment (if using pip/venv)
 └── README.md                      # This file
 ```
 
@@ -282,21 +478,39 @@ All API endpoints return responses in a standardized format:
 **Problem: `ModuleNotFoundError: No module named 'mcp_use'`**
 
 **Solution:**
-- Use `uv run uvicorn backend_service:app --reload --port 8000` instead of just `uvicorn`
+- Use `uv run uvicorn backend.backend_service:app --reload --port 8000` from project root
 - OR activate the virtual environment first:
   ```bash
+  # Navigate to backend directory
+  cd backend
+  
   # Windows
   .venv\Scripts\activate
   # Linux/Mac
   source .venv/bin/activate
+  
+  # Then run (from backend directory)
+  uvicorn backend_service:app --reload --port 8000
   ```
 
 **Problem: Backend won't start**
 
 **Solution:**
-- Ensure all dependencies are installed: `uv sync` or `pip install -r requirements.txt`
+- Ensure all dependencies are installed: `cd backend && uv sync` or `cd backend && pip install -r requirements.txt`
 - Check that port 8000 is not already in use
-- Verify your `.env` file exists and has the required API keys
+- Verify your `backend/.env` file exists and has the required API keys
+
+**Problem: `orjson` compilation errors (Python 3.12)**
+
+**Solution:**
+- The `requirements.txt` and `pyproject.toml` already include `orjson>=3.10.0` which is compatible with Python 3.12
+- If you still get compilation errors, try:
+  ```bash
+  cd backend
+  pip install "orjson>=3.10.0" --upgrade
+  pip install -r requirements.txt
+  ```
+- Or use `uv` which handles this automatically: `cd backend && uv sync`
 
 **Problem: Validation errors in API**
 
@@ -324,7 +538,7 @@ All API endpoints return responses in a standardized format:
 **Problem: Configuration activation fails**
 
 **Solution:**
-- Verify your API keys are correct in the `.env` file
+- Verify your API keys are correct in the `backend/.env` file
 - Check that the MCP configuration JSON is valid
 - Ensure the backend is running and accessible
 - Check browser console for error messages
@@ -389,13 +603,18 @@ curl -X POST "http://localhost:8000/api/mcp/activate" \
 
 ## Environment Variables Reference
 
-### Backend (.env)
+### Backend (backend/.env)
 
 | Variable | Required | Description |
 |----------|----------|-------------|
+| `BACKEND_HOST` | **Yes** | Backend server host (must be set) |
+| `BACKEND_PORT` | **Yes** | Backend server port (must be set) |
+| `FRONTEND_URL` | **Yes** | Frontend URL for CORS (must be set) |
 | `OPENROUTER_API_KEY` | Yes* | OpenRouter API key for LLM access |
 | `OPENAI_API_KEY` | Yes* | Alternative to OpenRouter (use one) |
+| `LLM_MODEL` | No | LLM model name (default: openai/gpt-4o-mini) |
 | `OPENROUTER_BASE_URL` | No | OpenRouter API base URL (default: https://openrouter.ai/api/v1) |
+| `MCP_MAX_STEPS` | No | Maximum steps for MCP agent (default: 100) |
 | `FIRECRAWL_API_KEY` | Yes | Firecrawl API key for web scraping |
 | `RAGIE_API_KEY` | Yes | Ragie API key for multimodal RAG |
 
@@ -405,7 +624,7 @@ curl -X POST "http://localhost:8000/api/mcp/activate" \
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `BACKEND_URL` | Yes | Backend API URL (default: http://localhost:8000) |
+| `BACKEND_URL` | **Yes** | Backend API URL (must be set, no default) |
 
 ## Additional Resources
 

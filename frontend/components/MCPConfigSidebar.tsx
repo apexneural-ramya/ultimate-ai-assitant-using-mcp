@@ -65,6 +65,18 @@ export default function MCPConfigSidebar({
         body: JSON.stringify({ config, sessionId }),
       })
 
+      // Handle network errors
+      if (!response.ok) {
+        let errorMessage = 'Failed to activate configuration'
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.message || errorMessage
+        } catch {
+          errorMessage = `Server error: ${response.status} ${response.statusText}`
+        }
+        throw new Error(errorMessage)
+      }
+
       const data = await response.json()
 
       if (!data.status || !response.ok) {
@@ -74,7 +86,18 @@ export default function MCPConfigSidebar({
       setSuccess('✅ Configuration activated successfully!')
       onConfigActivated(data.data?.sessionId || data.sessionId)
     } catch (err: any) {
-      setError(err.message || 'Invalid JSON configuration')
+      // Provide more helpful error messages
+      let errorMessage = err.message || 'Invalid JSON configuration'
+      
+      if (err.message?.includes('JSON') || err.message?.includes('parse')) {
+        errorMessage = 'Invalid JSON format. Please check your configuration syntax.'
+      } else if (err.message?.includes('connect') || err.message?.includes('backend')) {
+        errorMessage = err.message
+      } else if (!err.message) {
+        errorMessage = 'Network error: Could not reach the backend server. Make sure it is running on port 8000.'
+      }
+      
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -91,12 +114,16 @@ export default function MCPConfigSidebar({
   return (
     <div
       style={{
-        width: '400px',
+        width: '100%',
+        maxWidth: '460px',
         borderRight: '1px solid #e0e0e0',
         display: 'flex',
         flexDirection: 'column',
-        height: '100vh',
+        height: '100%',
+        minHeight: '640px',
         backgroundColor: '#f9f9f9',
+        borderRadius: '12px',
+        overflow: 'hidden',
       }}
     >
       <div style={{ padding: '1.5rem' }}>

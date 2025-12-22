@@ -11,6 +11,8 @@ env/
 
 # Environment / secrets
 .env
+backend/.env
+frontend/.env.local
 
 # IDE / editor
 .vscode/

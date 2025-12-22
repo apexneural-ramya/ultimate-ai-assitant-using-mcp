@@ -36,7 +36,7 @@
     },
     "content": {
         "overview": {
-            "text": "Modern AI applications require integration with multiple specialized services to deliver comprehensive functionality. The Ultimate AI Assistant demonstrates a production-ready approach to building modular AI systems using the Model Context Protocol (MCP). By orchestrating Firecrawl for intelligent web scraping and Ragie for multimodal Retrieval-Augmented Generation, this platform enables users to interact naturally with powerful AI capabilities through a modern Next.js frontend with a Python FastAPI backend.",
+            "text": "Modern AI applications require integration with multiple specialized services to deliver comprehensive functionality. The Ultimate AI Assistant demonstrates a production-ready approach to building modular AI systems using the Model Context Protocol (MCP). By orchestrating Firecrawl for intelligent web scraping and Ragie for multimodal Retrieval-Augmented Generation, this platform enables users to interact naturally with powerful AI capabilities through a modern Next.js frontend with a Python FastAPI backend. The project follows a clean separation of concerns with backend and frontend in separate folders, all configuration managed through environment variables with no hardcoded values.",
             "stats": [
                 {
                     "label": "Integration Time",
@@ -44,15 +44,19 @@
                 },
                 {
                     "label": "MCP Servers",
-                    "value": "2+"
+                    "value": "2"
                 },
                 {
                     "label": "Query Response",
                     "value": "<5 sec"
                 },
                 {
-                    "label": "User Config",
-                    "value": "JSON-based"
+                    "label": "Project Structure",
+                    "value": "Backend + Frontend"
+                },
+                {
+                    "label": "Hardcoded Values",
+                    "value": "0"
                 }
             ]
         },
@@ -89,45 +93,57 @@
                 {
                     "title": "Environment Variable Substitution",
                     "description": "Supports environment variable substitution in MCP configurations using ${VAR_NAME} syntax, keeping API keys secure and configurations flexible across environments."
+                },
+                {
+                    "title": "Zero Hardcoded Values",
+                    "description": "All URLs, ports, and configuration values are read from environment variables. No hardcoded values in the codebase, ensuring easy deployment across different environments."
+                },
+                {
+                    "title": "Modular Project Structure",
+                    "description": "Clean separation with backend/ and frontend/ folders. Backend contains all Python code, dependencies, and environment files. Frontend contains Next.js application with separate environment configuration."
+                },
+                {
+                    "title": "Landing Page + Playground",
+                    "description": "Beautiful landing page showcasing features, with separate playground route for MCP configuration and chat interface. Modern UI with responsive design."
                 }
             ]
         },
         "architecture": {
-            "description": "The system follows a modular architecture where a central MCP Agent orchestrates multiple specialized MCP servers. The Next.js frontend provides the user interface, which communicates with a Python FastAPI backend that manages MCPAgent instances for tool selection and execution. Each MCP server (Firecrawl, Ragie) runs as an independent process, communicating via the standardized Model Context Protocol.",
+            "description": "The system follows a modular architecture with clean separation between frontend and backend. The Next.js frontend (in frontend/ folder) provides a landing page and playground interface, communicating with a Python FastAPI backend (in backend/ folder) that manages MCPAgent instances. The backend loads all configuration from environment variables (backend/.env), while the frontend uses its own environment file (frontend/.env.local). A central MCP Agent orchestrates multiple specialized MCP servers. Each MCP server (Firecrawl, Ragie) runs as an independent process, communicating via the standardized Model Context Protocol. All API responses follow a standardized format for consistent error handling.",
             "diagramUrl": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1200&h=600&fit=crop",
             "diagramCaption": "Figure 1: MCP-Powered AI Assistant Architecture",
             "components": [
                 {
-                    "title": "Next.js Frontend",
-                    "desc": "Provides modern React-based conversational UI and configuration management"
+                    "title": "Next.js Frontend (frontend/)",
+                    "desc": "Landing page and playground interface. React-based conversational UI with TypeScript. Environment variables in frontend/.env.local. API routes proxy requests to FastAPI backend."
                 },
                 {
-                    "title": "FastAPI Backend",
-                    "desc": "Python backend service with standardized API responses, exception handling, and session management for MCP clients and agents"
+                    "title": "FastAPI Backend (backend/)",
+                    "desc": "Python backend service in backend/ folder with all dependencies (pyproject.toml, requirements.txt). Standardized API responses, exception handling, and session management. Environment variables in backend/.env. No hardcoded URLs or ports."
                 },
                 {
                     "title": "MCP Agent",
-                    "desc": "Core orchestrator that routes queries to appropriate MCP servers"
+                    "desc": "Core orchestrator that routes queries to appropriate MCP servers. Managed by mcp-use library with configurable max_steps."
                 },
                 {
                     "title": "Firecrawl Server",
-                    "desc": "Handles web scraping and content extraction tasks"
+                    "desc": "Handles web scraping and content extraction tasks via npx firecrawl-mcp"
                 },
                 {
                     "title": "Ragie Server",
-                    "desc": "Manages multimodal RAG and semantic search operations"
+                    "desc": "Manages multimodal RAG and semantic search operations via npx @ragieai/mcp-server"
                 },
                 {
-                    "title": "OpenRouter LLM",
-                    "desc": "Provides natural language understanding and response generation"
+                    "title": "OpenRouter/OpenAI LLM",
+                    "desc": "Provides natural language understanding and response generation. Configurable via environment variables (OPENROUTER_API_KEY or OPENAI_API_KEY)."
                 }
             ]
         },
         "implementation": {
-            "description": "The implementation uses mcp-use library to create a seamless connection between LangChain-compatible LLMs and MCP servers. The FastAPI backend provides standardized API responses with consistent error handling. The MCPClient loads server configurations dynamically with environment variable substitution support, while the MCPAgent handles the agentic workflow of tool selection and execution based on user queries. All API endpoints return responses in a standardized format with status_code, status, message, path, and data fields.",
+            "description": "The implementation uses mcp-use library to create a seamless connection between LangChain-compatible LLMs and MCP servers. The FastAPI backend (backend/backend_service.py) provides standardized API responses with consistent error handling via custom exception handlers. The MCPClient loads server configurations dynamically with environment variable substitution support using recursive substitution function. The MCPAgent handles the agentic workflow of tool selection and execution based on user queries. All API endpoints return responses in a standardized format with status_code, status, message, path, and data fields. The project structure separates backend (Python, FastAPI) and frontend (Next.js, React) into distinct folders, each with their own environment files. No hardcoded URLs, ports, or configuration values exist in the codebase.",
             "codeSnippet": {
                 "language": "python",
-                "code": "from mcp_use import MCPAgent, MCPClient\nfrom langchain_openai import ChatOpenAI\nfrom fastapi import FastAPI\nfrom pydantic import BaseModel\n\n# Standardized response format\nclass StandardResponse(BaseModel):\n    status_code: int\n    status: bool\n    message: str\n    path: str\n    data: Optional[Any] = None\n\n# Create MCP client from configuration (with env var substitution)\nconfig = {\n    \"mcpServers\": {\n        \"mcp-server-firecrawl\": {\n            \"command\": \"npx\",\n            \"args\": [\"-y\", \"firecrawl-mcp\"],\n            \"env\": {\"FIRECRAWL_API_KEY\": \"${FIRECRAWL_API_KEY}\"}\n        },\n        \"ragie\": {\n            \"command\": \"npx\",\n            \"args\": [\"-y\", \"@ragieai/mcp-server\", \"--partition\", \"default\"],\n            \"env\": {\"RAGIE_API_KEY\": \"${RAGIE_API_KEY}\"}\n        }\n    }\n}\n\n# Environment variables are automatically substituted\nclient = MCPClient.from_dict(config)\nllm = ChatOpenAI(model=\"openai/gpt-4o-mini\", api_key=openrouter_key)\nagent = MCPAgent(llm=llm, client=client, max_steps=100)\n\n# Execute query - returns standardized response\nresult = await agent.run(\"Search my documents for AI research papers\")\n\n# API returns:\n# {\n#   \"status_code\": 200,\n#   \"status\": true,\n#   \"message\": \"Query executed successfully\",\n#   \"path\": \"/api/mcp/query\",\n#   \"data\": {\"result\": \"...\"}\n# }"
+                "code": "# backend/backend_service.py\nfrom mcp_use import MCPAgent, MCPClient\nfrom langchain_openai import ChatOpenAI\nfrom fastapi import FastAPI\nfrom pydantic import BaseModel\nimport os\nfrom dotenv import load_dotenv\n\n# Load environment variables from backend/.env\nload_dotenv()\n\n# Standardized response format\nclass StandardResponse(BaseModel):\n    status_code: int\n    status: bool\n    message: str\n    path: str\n    data: Optional[Any] = None\n\n# All values from environment variables\nfrontend_url = os.getenv(\"FRONTEND_URL\")  # Required, no default\nbackend_host = os.getenv(\"BACKEND_HOST\")  # Required\nbackend_port = os.getenv(\"BACKEND_PORT\")  # Required\nllm_model = os.getenv(\"LLM_MODEL\", \"openai/gpt-4o-mini\")\nmax_steps = int(os.getenv(\"MCP_MAX_STEPS\", \"100\"))\n\n# Create MCP client from configuration (with env var substitution)\nconfig = {\n    \"mcpServers\": {\n        \"mcp-server-firecrawl\": {\n            \"command\": \"npx\",\n            \"args\": [\"-y\", \"firecrawl-mcp\"],\n            \"env\": {\"FIRECRAWL_API_KEY\": \"${FIRECRAWL_API_KEY}\"}\n        },\n        \"ragie\": {\n            \"command\": \"npx\",\n            \"args\": [\"-y\", \"@ragieai/mcp-server\", \"--partition\", \"default\"],\n            \"env\": {\"RAGIE_API_KEY\": \"${RAGIE_API_KEY}\"}\n        }\n    }\n}\n\n# Environment variables are automatically substituted\nclient = MCPClient.from_dict(substitute_env_vars(config))\nllm = ChatOpenAI(\n    model=llm_model,\n    api_key=os.getenv(\"OPENROUTER_API_KEY\"),\n    base_url=os.getenv(\"OPENROUTER_BASE_URL\", \"https://openrouter.ai/api/v1\")\n)\nagent = MCPAgent(llm=llm, client=client, max_steps=max_steps)\n\n# Execute query - returns standardized response\nresult = await agent.run(\"Search my documents for AI research papers\")\n\n# API returns standardized format:\n# {\n#   \"status_code\": 200,\n#   \"status\": true,\n#   \"message\": \"Query executed successfully\",\n#   \"path\": \"/api/mcp/query\",\n#   \"data\": {\"result\": \"...\"}\n# }"
             },
             "proTip": {
                 "title": "Why MCP Protocol Matters",
@@ -135,7 +151,7 @@
             }
         },
         "workflow": {
-            "description": "1. User Configuration: Users provide MCP server configurations via JSON in the Next.js sidebar, using ${VAR_NAME} syntax for environment variables.\n2. Backend Activation: Next.js frontend sends configuration to FastAPI backend via POST /api/mcp/activate.\n3. Environment Variable Substitution: FastAPI backend automatically substitutes ${VAR_NAME} placeholders with actual environment variable values.\n4. Client Initialization: FastAPI backend creates MCPClient and validates the configuration, spawning MCP server processes.\n5. Agent Creation: MCPAgent is initialized with the LLM and MCP client in the backend, stored with a session ID.\n6. Query Processing: User queries from Next.js are sent to POST /api/mcp/query endpoint with the session ID.\n7. Tool Execution: The agent determines which MCP tools to use and calls appropriate MCP servers (Firecrawl for web scraping, Ragie for RAG).\n8. Response Generation: Results from MCP tools are synthesized by the LLM into a coherent response.\n9. Standardized Response: Backend wraps the response in standardized format with status_code, status, message, path, and data fields.\n10. Display Results: The final answer is returned to the Next.js frontend and displayed in the chat interface.",
+            "description": "1. Setup: Configure environment variables in backend/.env (API keys, host, port, frontend URL) and frontend/.env.local (BACKEND_URL). All values are read from environment files with no hardcoded defaults.\n2. Landing Page: User visits Next.js frontend (http://localhost:3000) and sees the landing page with project features and setup instructions.\n3. Navigate to Playground: User clicks 'Launch Live Playground' button to navigate to /playground route.\n4. User Configuration: Users provide MCP server configurations via JSON in the Next.js playground sidebar, using ${VAR_NAME} syntax for environment variables.\n5. Backend Activation: Next.js frontend API route (/api/mcp/activate) proxies request to FastAPI backend (backend.backend_service:app) via POST /api/mcp/activate.\n6. Environment Variable Substitution: FastAPI backend automatically substitutes ${VAR_NAME} placeholders with actual values from backend/.env using recursive substitution function.\n7. Client Initialization: FastAPI backend creates MCPClient and validates the configuration, spawning MCP server processes (Firecrawl and Ragie).\n8. Agent Creation: MCPAgent is initialized with LLM (from environment variables) and MCP client in the backend, stored with a session ID in memory.\n9. Query Processing: User queries from Next.js playground are sent to Next.js API route (/api/mcp/query) which proxies to FastAPI POST /api/mcp/query endpoint with the session ID.\n10. Tool Execution: The agent determines which MCP tools to use and calls appropriate MCP servers (Firecrawl for web scraping, Ragie for RAG).\n11. Response Generation: Results from MCP tools are synthesized by the LLM into a coherent response.\n12. Standardized Response: Backend wraps the response in standardized format with status_code, status, message, path, and data fields, even for errors via custom exception handlers.\n13. Display Results: The final answer is returned through Next.js API route to the frontend and displayed in the chat interface.",
             "image": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=600&fit=crop",
             "caption": "Figure 2: User Query to Response Workflow"
         },
@@ -143,13 +159,15 @@
             "description": "This platform empowers developers and organizations to rapidly build AI assistants with specialized capabilities. By leveraging MCP, teams can integrate best-in-class services for web scraping, RAG, and other functions without building everything from scratch. The conversational interface makes advanced AI accessible to non-technical users.",
             "benefits": [
                 "Rapid prototyping of AI assistants with specialized capabilities",
-                "Modular architecture enables easy addition of new MCP servers",
+                "Modular architecture with backend/ and frontend/ separation enables easy maintenance",
                 "Standardized protocol reduces integration complexity",
                 "Consistent API response format simplifies frontend error handling",
                 "Environment variable substitution keeps configurations secure and flexible",
+                "Zero hardcoded values ensures easy deployment across environments",
                 "Natural language interface makes AI tools accessible to all users",
                 "Reduces development time for multi-modal AI applications",
-                "Production-ready error handling with standardized error responses"
+                "Production-ready error handling with standardized error responses",
+                "Clean project structure with organized dependencies (pyproject.toml, requirements.txt)"
             ]
         },
         "results": {

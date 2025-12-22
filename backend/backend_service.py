@@ -1,7 +1,7 @@
 """
 FastAPI backend service for MCP operations.
 This service handles MCP client and agent creation/management.
-Run with: uvicorn backend_service:app --reload --port 8000
+Run with: uv run uvicorn backend.backend_service:app --reload --port ${BACKEND_PORT:-8000}
 """
 import os
 import re
@@ -21,7 +21,7 @@ import warnings
 warnings.filterwarnings("ignore")
 mcp_use.set_debug(0)
 
-# Load environment variables
+# Load environment variables from backend .env file
 load_dotenv()
 
 app = FastAPI(
@@ -31,9 +31,12 @@ app = FastAPI(
 )
 
 # Enable CORS for Next.js frontend
+frontend_url = os.getenv("FRONTEND_URL")
+if not frontend_url:
+    raise ValueError("FRONTEND_URL environment variable is required")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Next.js default port
+    allow_origins=[frontend_url],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -261,14 +264,18 @@ async def activate_mcp_config(request: MCPConfigRequest, req: Request):
                 ).dict()
             )
 
+        llm_model = os.getenv("LLM_MODEL", "openai/gpt-4o-mini")
+        llm_base_url = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
+        max_steps = int(os.getenv("MCP_MAX_STEPS", "100"))
+
         llm = ChatOpenAI(
-            model="openai/gpt-4o-mini",
+            model=llm_model,
             api_key=api_key,
-            base_url=os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"),
+            base_url=llm_base_url,
         )
 
         # Create agent
-        agent = MCPAgent(llm=llm, client=client, max_steps=100)
+        agent = MCPAgent(llm=llm, client=client, max_steps=max_steps)
 
         # Store agent and client with session ID
         session_id = request.sessionId or f"session-{int(time.time() * 1000)}"
@@ -607,5 +614,13 @@ async def list_sessions(req: Request):
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    backend_host = os.getenv("BACKEND_HOST")
+    backend_port = os.getenv("BACKEND_PORT")
+    
+    if not backend_host:
+        raise ValueError("BACKEND_HOST environment variable is required")
+    if not backend_port:
+        raise ValueError("BACKEND_PORT environment variable is required")
+    
+    uvicorn.run(app, host=backend_host, port=int(backend_port))
 
