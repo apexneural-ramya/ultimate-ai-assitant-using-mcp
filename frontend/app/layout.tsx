@@ -4,6 +4,11 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'MCP-powered Ultimate AI Assistant',
   description: 'Chat interface for interacting with MCP (Model Context Protocol) servers',
+  icons: {
+    icon: '/icon.svg',
+    shortcut: '/icon.svg',
+    apple: '/icon.svg',
+  },
 }
 
 export default function RootLayout({
