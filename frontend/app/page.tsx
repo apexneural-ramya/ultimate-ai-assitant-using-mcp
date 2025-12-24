@@ -118,7 +118,7 @@ export default function Home() {
             <div>
               <p className="eyebrow">How it works</p>
               <h2>From env to chat in minutes</h2>
-              <p className="subtitle">Follow the flow and you're chatting with MCP tools quickly.</p>
+              <p className="subtitle">Follow the flow and you&apos;re chatting with MCP tools quickly.</p>
             </div>
           </div>
           <div className="steps">
@@ -137,8 +137,8 @@ export default function Home() {
           <div>
             <p className="eyebrow">Ready to ship</p>
             <h2>Run locally, deploy anywhere.</h2>
-            <p className="subtitle">
-              Keep secrets in env files, start both servers, and you're live. No hardcoded URLs or
+              <p className="subtitle">
+              Keep secrets in env files, start both servers, and you&apos;re live. No hardcoded URLs or
               ports.
             </p>
           </div>

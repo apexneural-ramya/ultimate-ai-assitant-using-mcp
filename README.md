@@ -54,6 +54,7 @@ uv sync --python 3.13
 
 **With pip/venv:**
 ```bash
+cd backend
 # Windows
 py -3.12 -m venv .venv
 # Or
@@ -63,64 +64,6 @@ py -3.13 -m venv .venv
 python3.12 -m venv .venv
 # Or
 python3.13 -m venv .venv
-```
-
-### Installing Python 3.12 or 3.13
-
-If you only have Python 3.14 installed:
-
-1. Download Python 3.12 or 3.13 from [python.org/downloads](https://www.python.org/downloads/)
-2. Install it alongside your existing Python version
-3. Use the version-specific commands above to create your virtual environment
-
-## Quick Start Guide
-
-Follow these steps to get the project up and running:
-
-### Step 1: Clone the Repository (if applicable)
-
-```bash
-git clone <repository-url>
-cd ultimate-ai-assitant-using-mcp
-```
-
-### Step 2: Install Python Dependencies
-
-**Option A: Using uv (Recommended)**
-
-```bash
-# Install uv if you haven't already
-# Windows (PowerShell):
-powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-# Linux/Mac:
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Navigate to backend directory and install all Python dependencies
-cd backend
-uv sync
-cd ..
-```
-
-**Option B: Using pip and venv**
-
-```bash
-# Navigate to backend directory
-cd backend
-
-# Create virtual environment
-python -m venv .venv
-
-# Activate virtual environment
-# Windows:
-.venv\Scripts\activate
-# Linux/Mac:
-source .venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Note: Keep the virtual environment activated while working in backend directory
-# To deactivate later, just type: deactivate
 ```
 
 **Required Python packages:**
@@ -256,12 +199,12 @@ You need to obtain API keys from the following services:
 **Using uv (Recommended):**
 
 ```bash
-# Make sure you're in the project root directory
-cd ultimate-ai-assitant-using-mcp
+# Make sure you're in the project backend
+cd backend
 
 # Start the backend server
 # The host and port are read from BACKEND_HOST and BACKEND_PORT in backend/.env
-uv run uvicorn backend.backend_service:app --reload --host ${BACKEND_HOST:-0.0.0.0} --port ${BACKEND_PORT:-8000}
+uv run uvicorn backend_service:app --reload
 ```
 
 **OR if you've activated the virtual environment manually:**
@@ -277,8 +220,8 @@ cd backend
 source .venv/bin/activate
 
 # Then run uvicorn (from backend directory, use relative import)
-# Make sure BACKEND_HOST and BACKEND_PORT are set in backend/.env
-uvicorn backend_service:app --reload --host 0.0.0.0 --port 8000
+
+uvicorn backend_service:app --reload 
 ```
 
 **Verify Backend is Running:**
