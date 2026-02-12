@@ -1,8 +1,8 @@
 # ============================================
 # Frontend Dockerfile - Next.js Application
 # ============================================
-# Multi-stage build with in-container Nginx reverse proxy
-# Nginx listens on port 3000, proxies to Next.js on port 3001
+# Multi-stage build for Dokploy deployment
+# Next.js standalone serves directly on port 3000
 
 # Stage 1: Build the Next.js application
 FROM node:20-alpine AS builder
@@ -27,15 +27,12 @@ RUN mkdir -p /app/public
 RUN npm run build
 
 
-# Stage 2: Runtime - Nginx + Next.js standalone
+# Stage 2: Runtime - Next.js standalone
 FROM node:20-alpine AS runner
 
 WORKDIR /app
 
 ENV NODE_ENV=production
-
-# Install nginx, su-exec, and netcat for health checks
-RUN apk add --no-cache nginx su-exec netcat-openbsd
 
 # Create non-root user for Next.js
 RUN addgroup --system --gid 1001 nodejs && \
@@ -59,40 +56,17 @@ RUN if [ ! -f "server.js" ]; then \
 	fi && \
 	echo "Verified server.js exists"
 
-# Debug: show Alpine nginx file layout
-RUN echo "=== Nginx files ===" && \
-	find /etc/nginx -type f 2>/dev/null && \
-	echo "=== Nginx version ===" && \
-	nginx -v 2>&1 || true
+USER nextjs
 
-# Remove default nginx server configs (keep mime.types and other base files)
-RUN rm -f /etc/nginx/http.d/default.conf 2>/dev/null || true && \
-	rm -f /etc/nginx/conf.d/default.conf 2>/dev/null || true
-
-# Ensure required directories exist
-RUN mkdir -p /var/log/nginx /run/nginx /var/lib/nginx/tmp
-
-# Replace main nginx config
-COPY nginx.conf /etc/nginx/nginx.conf
-
-# Verify nginx config is valid during build
-RUN nginx -t 2>&1 && echo "Nginx config OK" || \
-	(echo "=== NGINX CONFIG ERROR ===" && cat /etc/nginx/nginx.conf && exit 1)
-
-# Copy startup script
-COPY start.sh /start.sh
-RUN chmod +x /start.sh
-
-# Next.js runs on port 3001 (internal), Nginx on port 3000 (exposed)
-ENV PORT=3001
-ENV HOSTNAME=0.0.0.0
-
-# Expose port 3000 - Nginx listens here
+# Next.js serves directly on port 3000
 EXPOSE 3000
 
-# Health check against Nginx on port 3000
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
+
+# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
 	CMD wget --spider -q http://localhost:3000 || exit 1
 
-# Start Nginx + Next.js via startup script
-CMD ["/start.sh"]
+# Start Next.js directly
+CMD ["node", "server.js"]
