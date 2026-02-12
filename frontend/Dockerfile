@@ -35,6 +35,9 @@ COPY . .
 ARG BACKEND_URL=http://backend:8000
 ENV BACKEND_URL=${BACKEND_URL}
 
+# Ensure public directory exists (may not exist in all projects)
+RUN mkdir -p /app/public
+
 # Build the Next.js application
 RUN npm run build
 
