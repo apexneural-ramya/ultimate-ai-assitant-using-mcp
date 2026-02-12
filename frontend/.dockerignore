@@ -29,6 +29,9 @@ Dockerfile
 docker-compose*.yml
 .dockerignore
 
+# Nginx subdirectory (not used in container build)
+nginx/
+
 # Misc
 README.md
 *.md

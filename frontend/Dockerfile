@@ -1,84 +1,88 @@
 # ============================================
 # Frontend Dockerfile - Next.js Application
 # ============================================
-# Multi-stage build for optimized production image
+# Multi-stage build with in-container Nginx reverse proxy
+# Nginx listens on port 3000, proxies to Next.js on port 3001
 
-# Stage 1: Dependencies - install node modules
-FROM node:20-alpine AS deps
-
-WORKDIR /app
-
-# Copy dependency files for better layer caching
-COPY package.json package-lock.json* yarn.lock* pnpm-lock.yaml* ./
-
-# Install dependencies based on available lock file
-RUN \
-	if [ -f yarn.lock ]; then yarn install --frozen-lockfile; \
-	elif [ -f package-lock.json ]; then npm ci; \
-	elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm install --frozen-lockfile; \
-	else npm install; \
-	fi
-
-
-# Stage 2: Builder - build the Next.js application
+# Stage 1: Build the Next.js application
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy dependencies from deps stage
-COPY --from=deps /app/node_modules ./node_modules
-
-# Copy source code
-COPY . .
-
-# Set build-time environment variables
-ARG BACKEND_URL=http://backend:8000
+# Server-side environment variable (available at build + runtime)
+ARG BACKEND_URL=http://localhost:8000
 ENV BACKEND_URL=${BACKEND_URL}
+
+# Install dependencies
+COPY package*.json ./
+RUN npm install
+
+# Copy source files
+COPY . .
 
 # Ensure public directory exists (may not exist in all projects)
 RUN mkdir -p /app/public
 
-# Build the Next.js application
+# Build Next.js application
 RUN npm run build
 
 
-# Stage 3: Runner - lean production image
+# Stage 2: Runtime - Nginx + Next.js standalone
 FROM node:20-alpine AS runner
 
 WORKDIR /app
 
-# Set production environment
 ENV NODE_ENV=production
 
-# Create non-root user for security
+# Install nginx, su-exec, and netcat for health checks
+RUN apk add --no-cache nginx su-exec netcat-openbsd
+
+# Create non-root user for Next.js
 RUN addgroup --system --gid 1001 nodejs && \
 	adduser --system --uid 1001 nextjs
 
-# Copy public assets
-COPY --from=builder /app/public ./public
+# Server-side runtime environment variable
+ARG BACKEND_URL=http://localhost:8000
+ENV BACKEND_URL=${BACKEND_URL}
 
-# Copy standalone build output
+# Copy Next.js standalone build
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
-USER nextjs
+# Verify server.js exists (critical for startup)
+RUN if [ ! -f "server.js" ]; then \
+		echo "ERROR: server.js not found after copying standalone build!" && \
+		echo "Contents of /app:" && \
+		ls -la && \
+		exit 1; \
+	fi && \
+	echo "Verified server.js exists"
 
-# Expose the frontend port
-EXPOSE 3000
+# Remove default nginx configs to avoid conflicts
+RUN rm -rf /etc/nginx/conf.d/*.conf 2>/dev/null || true && \
+	rm -f /etc/nginx/nginx.conf 2>/dev/null || true
 
-# Set runtime environment variables
-# HOSTNAME must be 0.0.0.0 so the server listens on all interfaces
-# (required for Dokploy/Traefik to reach the container)
-ENV PORT=3000
+# Copy nginx config
+COPY nginx.conf /etc/nginx/nginx.conf
+
+# Verify nginx config is valid during build
+RUN nginx -t || (echo "=== NGINX CONFIG ERROR ===" && cat /etc/nginx/nginx.conf && exit 1)
+
+# Copy startup script
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
+
+# Next.js runs on port 3001 (internal), Nginx on port 3000 (exposed)
+ENV PORT=3001
 ENV HOSTNAME=0.0.0.0
 
-# BACKEND_URL is required at runtime for API routes
-# Override this via Dokploy environment variables
-ENV BACKEND_URL=http://localhost:8000
+# Expose port 3000 - Nginx listens here
+EXPOSE 3000
 
-# Health check
+# Health check against Nginx on port 3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
 	CMD wget --spider -q http://localhost:3000 || exit 1
 
-# Start the Next.js server
-CMD ["node", "server.js"]
+# Start Nginx + Next.js via startup script
+CMD ["/start.sh"]
