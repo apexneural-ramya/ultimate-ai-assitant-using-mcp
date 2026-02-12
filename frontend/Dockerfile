@@ -59,15 +59,25 @@ RUN if [ ! -f "server.js" ]; then \
 	fi && \
 	echo "Verified server.js exists"
 
-# Remove default nginx configs to avoid conflicts
-RUN rm -rf /etc/nginx/conf.d/*.conf 2>/dev/null || true && \
-	rm -f /etc/nginx/nginx.conf 2>/dev/null || true
+# Debug: show Alpine nginx file layout
+RUN echo "=== Nginx files ===" && \
+	find /etc/nginx -type f 2>/dev/null && \
+	echo "=== Nginx version ===" && \
+	nginx -v 2>&1 || true
 
-# Copy nginx config
+# Remove default nginx server configs (keep mime.types and other base files)
+RUN rm -f /etc/nginx/http.d/default.conf 2>/dev/null || true && \
+	rm -f /etc/nginx/conf.d/default.conf 2>/dev/null || true
+
+# Ensure required directories exist
+RUN mkdir -p /var/log/nginx /run/nginx /var/lib/nginx/tmp
+
+# Replace main nginx config
 COPY nginx.conf /etc/nginx/nginx.conf
 
 # Verify nginx config is valid during build
-RUN nginx -t || (echo "=== NGINX CONFIG ERROR ===" && cat /etc/nginx/nginx.conf && exit 1)
+RUN nginx -t 2>&1 && echo "Nginx config OK" || \
+	(echo "=== NGINX CONFIG ERROR ===" && cat /etc/nginx/nginx.conf && exit 1)
 
 # Copy startup script
 COPY start.sh /start.sh
