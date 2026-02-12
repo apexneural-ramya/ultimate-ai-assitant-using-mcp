@@ -67,8 +67,14 @@ USER nextjs
 EXPOSE 3000
 
 # Set runtime environment variables
+# HOSTNAME must be 0.0.0.0 so the server listens on all interfaces
+# (required for Dokploy/Traefik to reach the container)
 ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
+ENV HOSTNAME=0.0.0.0
+
+# BACKEND_URL is required at runtime for API routes
+# Override this via Dokploy environment variables
+ENV BACKEND_URL=http://localhost:8000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
