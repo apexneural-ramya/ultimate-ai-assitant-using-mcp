@@ -58,15 +58,12 @@ RUN if [ ! -f "server.js" ]; then \
 
 USER nextjs
 
-# Next.js serves directly on port 3000
 EXPOSE 3000
-
-ENV PORT=3000
-ENV HOSTNAME=0.0.0.0
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
 	CMD wget --spider -q http://localhost:3000 || exit 1
 
-# Start Next.js directly
-CMD ["node", "server.js"]
+# Force PORT=3000 and HOSTNAME=0.0.0.0 at startup
+# This overrides any platform-injected env vars (e.g. Dokploy)
+CMD ["sh", "-c", "PORT=3000 HOSTNAME=0.0.0.0 node server.js"]
