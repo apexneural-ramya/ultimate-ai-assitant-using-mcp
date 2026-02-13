@@ -77,6 +77,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=5 \
 
 # Force PORT=3000 and HOSTNAME=0.0.0.0 at startup
 # This overrides any platform-injected env vars (e.g. Dokploy)
-# Use exec to ensure proper signal handling
-# Add explicit logging for debugging
-CMD ["sh", "-c", "echo 'Starting Next.js server...' && echo 'PORT=$PORT HOSTNAME=$HOSTNAME' && exec PORT=3000 HOSTNAME=0.0.0.0 node server.js"]
+# Use env command to set variables, then exec node
+CMD ["sh", "-c", "echo 'Starting Next.js server...' && echo 'PORT=3000 HOSTNAME=0.0.0.0' && exec env PORT=3000 HOSTNAME=0.0.0.0 node server.js"]
