@@ -59,14 +59,24 @@ RUN if [ ! -f "server.js" ]; then \
 	fi && \
 	echo "Verified server.js exists"
 
+# Install curl for health checks (wget might not be available)
+RUN apk add --no-cache curl
+
 USER nextjs
 
 EXPOSE 3000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
-	CMD wget --spider -q http://localhost:3000 || exit 1
+# Set environment variables for Next.js
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
+
+# Health check using curl (more reliable than wget)
+# Increased start-period to 30s to give Next.js more time to fully initialize
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=5 \
+	CMD curl -f http://localhost:3000 || exit 1
 
 # Force PORT=3000 and HOSTNAME=0.0.0.0 at startup
 # This overrides any platform-injected env vars (e.g. Dokploy)
-CMD ["sh", "-c", "PORT=3000 HOSTNAME=0.0.0.0 node server.js"]
+# Use exec to ensure proper signal handling
+# Add explicit logging for debugging
+CMD ["sh", "-c", "echo 'Starting Next.js server...' && echo 'PORT=$PORT HOSTNAME=$HOSTNAME' && exec PORT=3000 HOSTNAME=0.0.0.0 node server.js"]
