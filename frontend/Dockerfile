@@ -45,7 +45,10 @@ ENV BACKEND_URL=${BACKEND_URL}
 # Copy Next.js standalone build
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+
+# Create empty public directory (Next.js standalone includes public assets in .next/static)
+# Public assets are served from .next/static, but some apps may expect /public to exist
+RUN mkdir -p ./public
 
 # Verify server.js exists (critical for startup)
 RUN if [ ! -f "server.js" ]; then \
